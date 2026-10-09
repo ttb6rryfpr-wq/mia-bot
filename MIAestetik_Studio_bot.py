@@ -167,7 +167,7 @@ async def cryo_details(message: Message, state: FSMContext):
             "• Продолжайте пить воду для вывода разрушенных клеток.\n"
             "• В день процедуры избегайте бань, саун и тяжелых тренировок.\n"
             "• Не трите обработанную зону жесткой мочалкой.\n"
-            "• Эффект нарастает 3–8 недель. Повтор через 6–7 недель."
+            "• Эффект нарастает 3–8 недель. Повтор через 3-5 недель."
         )
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
@@ -220,7 +220,8 @@ async def liposonix_details(message: Message, state: FSMContext):
             "📋 **Подготовка и после:**\n"
             "• Легкий перекус за 1-2 часа, без алкоголя за сутки.\n"
             "• Пейте воду (30 мл/кг), в день сеанса без бань и саун.\n"
-            "• Эффект нарастает 8–12 недель."
+            "• "repeat_interval": "6–8 недель",  # обновлено по вашему запросу
+        "effect_buildup": "до 2–3 месяцев"
         )
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
