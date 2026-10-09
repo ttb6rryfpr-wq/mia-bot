@@ -1,0 +1,1 @@
+worker: python MIAestetik_Studio_bot.py
