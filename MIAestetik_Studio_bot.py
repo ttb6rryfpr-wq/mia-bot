@@ -35,13 +35,14 @@ class MiaStates(StatesGroup):
     waiting_for_phone = State()
     waiting_for_messenger = State()
 
-# Главное меню: выбор категории
+# Главное меню (сначала «С чего начать», в конце «Контакты»)
 def get_categories_keyboard():
     buttons = [
-        [KeyboardButton(text="🔥 Коррекция тела (Топ-запросы)")],
         [KeyboardButton(text="🎯 С чего начать (Старт коррекции)")],
+        [KeyboardButton(text="🔥 Коррекция тела (Топ-запросы)")],
         [KeyboardButton(text="✨ Уход и омоложение лица")],
         [KeyboardButton(text="🌿 Уход и витамины / NL")],
+        [KeyboardButton(text="📍 Где мы находимся / Контакты")],
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
@@ -81,7 +82,7 @@ def get_face_procedures_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
-# Меню выбора действия для процедуры (Подробнее / Записаться)
+# Меню выбора действия для процедуры тела (Подробнее / Записаться)
 def get_procedure_action_keyboard():
     buttons = [
         [KeyboardButton(text="📖 Подробнее о процедуре")],
@@ -190,14 +191,14 @@ async def cmd_start(message: Message, state: FSMContext):
     )
     await state.set_state(MiaStates.choosing_category)
 
-@router.message(MiaStates.choosing_category, F.text == "🔥 Коррекция тела (Топ-запросы)")
-async def category_body(message: Message, state: FSMContext):
-    await message.answer("Выберите процедуру по телу:", reply_markup=get_body_procedures_keyboard())
-    await state.set_state(MiaStates.choosing_procedure)
-
 @router.message(MiaStates.choosing_category, F.text == "🎯 С чего начать (Старт коррекции)")
 async def category_start(message: Message, state: FSMContext):
     await message.answer("Выберите стартовую программу:", reply_markup=get_start_programs_keyboard())
+    await state.set_state(MiaStates.choosing_procedure)
+
+@router.message(MiaStates.choosing_category, F.text == "🔥 Коррекция тела (Топ-запросы)")
+async def category_body(message: Message, state: FSMContext):
+    await message.answer("Выберите процедуру по телу:", reply_markup=get_body_procedures_keyboard())
     await state.set_state(MiaStates.choosing_procedure)
 
 @router.message(MiaStates.choosing_category, F.text == "✨ Уход и омоложение лица")
@@ -214,6 +215,36 @@ async def category_nl(message: Message, state: FSMContext):
         reply_markup=get_nl_categories_keyboard(),
         parse_mode="Markdown"
     )
+
+@router.message(MiaStates.choosing_category, F.text == "📍 Где мы находимся / Контакты")
+async def contacts_handler(message: Message, state: FSMContext):
+    map_kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🗺 Открыть в Яндекс Картах", url="https://yandex.ru/maps/?ll=37.629493%2C55.709429&z=17&mode=search&text=55.709429%2C37.629493")]
+        ]
+    )
+    await message.answer(
+        "📍 **Студия Эстетики и Аппаратной Косметологии Анны**\n\n"
+        "🚇 **Адрес:** м. Тульская (шаговая доступность)\n"
+        "📍 **Координаты:** `55.709429, 37.629493`\n"
+        "💬 **Запись и консультация:** через нашего бота или в личных сообщениях\n\n"
+        "Будем рады видеть вас в нашей студии! ✨",
+        reply_markup=map_kb,
+        parse_mode="Markdown"
+    )
+
+# Универсальный возврат к категориям из любого подменю
+@router.message(F.text == "◀️ Назад к категориям")
+async def back_to_categories_universal(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Выберите направление:", reply_markup=get_categories_keyboard())
+    await state.set_state(MiaStates.choosing_category)
+
+@router.message(MiaStates.choosing_procedure, F.text == "◀️ К списку процедур")
+async def back_to_body_list(message: Message, state: FSMContext):
+    await message.answer("Выберите раздел:", reply_markup=get_categories_keyboard())
+    await state.set_state(MiaStates.choosing_category)
+
 
 # --- ОБРАБОТЧИКИ ИНЛАЙН-КНОПОК NL ---
 @router.callback_query(F.data == "nl_collagen")
@@ -293,17 +324,6 @@ async def cb_kids(callback: Message):
 async def cb_back_nl(callback: Message):
     text = "🌿 **Забота о красоте и здоровье изнутри**\n\nВыберите интересующий вас раздел:"
     await callback.message.edit_text(text, reply_markup=get_nl_categories_keyboard(), parse_mode="Markdown")
-
-
-@router.message(MiaStates.choosing_procedure, F.text == "◀️ Назад к категориям")
-async def back_to_categories(message: Message, state: FSMContext):
-    await message.answer("Выберите направление:", reply_markup=get_categories_keyboard())
-    await state.set_state(MiaStates.choosing_category)
-
-@router.message(MiaStates.choosing_procedure, F.text == "◀️ К списку процедур")
-async def back_to_body_list(message: Message, state: FSMContext):
-    await message.answer("Выберите процедуру по телу:", reply_markup=get_body_procedures_keyboard())
-    await state.set_state(MiaStates.choosing_procedure)
 
 
 # --- 1. КРИОЛИПОЛИЗ ---
@@ -435,7 +455,7 @@ async def choose_rf_body(message: Message, state: FSMContext):
     await ask_height_weight_flow(message, state)
 
 
-# --- СТАРТОВЫЕ ПРОГРАММЫ И ЛИЦО (Прямые ссылки на DIKIDI) ---
+# --- СТАРТОВЫЕ ПРОГРАММЫ И ЛИЦО (С красивыми описаниями и ссылками на DIKIDI) ---
 @router.message(MiaStates.choosing_procedure, F.text.in_({
     "📋 Консультация + подбор программы", "✨ Комплекс «Старт коррекции»",
     "🧪 Карбокситерапия CO2", "💎 V-LIFT с PDRN и пептидами",
@@ -446,32 +466,43 @@ async def choose_rf_body(message: Message, state: FSMContext):
 async def direct_dikidi_procedure(message: Message, state: FSMContext):
     proc = message.text
     dikidi_url = None
+    description = ""
 
     if "Консультация + подбор программы" in proc:
         dikidi_url = "https://dkd.su/1932426/s/21753983"
+        description = "🎯 **Определим зоны коррекции и подберём эффективный план процедур под ваш запрос.**\n✔ Индивидуальный подход\n✔ Рекомендации по процедурам\n✔ Понимание результата и стратегии"
     elif "Комплекс «Старт коррекции»" in proc:
         dikidi_url = "https://dkd.su/1932426/s/22125430"
+        description = "✨ **Идеальный старт для мягкого запуска коррекции фигуры и подготовки тела.**\n— Уменьшает отёчность, запускает лимфодренаж и микроциркуляцию\n— Легкость и аккуратный силуэт уже после 1 процедуры"
     elif "Карбокситерапия CO2" in proc:
         dikidi_url = "https://dkd.su/1932426/s/21225840"
+        description = "🧪 **Неинвазивный anti-age уход с глубоким насыщением кожи кислородом.**\n✨ Мгновенно выравнивает тон, освежает, сужает поры и придает сияние без реабилитации."
     elif "V-LIFT с PDRN" in proc:
         dikidi_url = "https://dkd.su/1932426/s/22555535"
+        description = "💎 **Комплексный уход для тонуса, сияния и более «собранной» кожи.**\n✔ Профессиональный пилинг-уход с PDRN и пептидами\n✔ Отлично подходит для тусклой, уставшей кожи и в качестве мягкого anti-age ухода."
     elif "Ультразвуковая чистка лица" in proc:
         dikidi_url = "https://dkd.su/1932426/s/21335030"
+        description = "✨ **Деликатное очищение кожи без травматизации.**\n✔ Мягко очищает поры, выравнивает тон и текстуру\n✔ Уменьшает черные точки, улучшает микроциркуляцию и цвет лица."
     elif "Аппаратный уход RF (Лицо)" in proc:
         dikidi_url = "https://dkd.su/1932426/s/23432381"
+        description = "📻 **Мягкий лифтинг-уход для подтяжки и уплотнения кожи без инъекций.**\n— Подтягивает овал лица, стимулирует выработку коллагена\n— Уменьшает мелкие морщины, возвращает отдохнувший вид."
     elif "Фарфоровая куколка" in proc:
         dikidi_url = "https://dkd.su/1932426/s/22555865"
+        description = "💧 **Фонофорез и сияние кожи с индивидуально подобранной сывороткой.**\n✨ Работает с увлажнением, тонусом, упругостью и тусклым цветом лица (витамин C, DMAE, пептиды, гиалуроновая кислота)."
     elif "Кофейный антивозрастной пилинг" in proc:
         dikidi_url = "https://dkd.su/1932426/s/22538168"
+        description = "☕ **Мягкий всесезонный уход для обновления кожи без выраженной реабилитации.**\n✔ Возвращает сияние и ровный тон уставшей коже, дает ощущение гладкости и комфорта."
     elif "Tiffany / Бирюзовый PDRN-пилинг" in proc:
         dikidi_url = "https://dkd.su/1932426/s/22538181"
+        description = "🌿 **Всесезонный уход для мягкого обновления и тонуса кожи.**\n✔ Выравнивает текстуру, сужает поры и придает визуально отдохнувший вид без агрессивного воздействия."
 
     kb = InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="📅 Записаться онлайн в DIKIDI", url=dikidi_url)]]
     )
     await message.answer(
-        f"🌸 Вы выбрали: **{proc}**\n\n"
-        "Вы можете сразу забронировать удобное время визита в нашей студии на м. Тульская по ссылке:",
+        f"🌸 **{proc}**\n\n"
+        f"{description}\n\n"
+        "Вы можете сразу забронировать удобное время визита в нашей студии на м. Тульская:",
         reply_markup=kb,
         parse_mode="Markdown"
     )
@@ -622,7 +653,7 @@ async def main():
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
     dp.include_router(router)
-    print("Бот @MIAestetik_Studio_bot обновлен: лицо и старт коррекции добавлены!")
+    print("Бот @MIAestetik_Studio_bot обновлен с описаниями процедур по лицу!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
