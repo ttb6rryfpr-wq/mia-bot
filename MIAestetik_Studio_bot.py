@@ -40,6 +40,7 @@ def get_categories_keyboard():
     buttons = [
         [KeyboardButton(text="🔥 Коррекция тела (Топ-запросы)")],
         [KeyboardButton(text="✨ Уход и омоложение лица")],
+        [KeyboardButton(text="🌿 Уход и витамины / NL")],
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
@@ -105,13 +106,71 @@ def get_face_procedures_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
+
+# --- КАТЕГОРИИ NL И УХОДА (Инлайн-клавиатуры) ---
+def get_nl_categories_keyboard():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="✨ Коллаген", callback_data="nl_collagen")],
+            [InlineKeyboardButton(text="🧬 Антиэйдж (Молодость)", callback_data="nl_antiage")],
+            [InlineKeyboardButton(text="🔥 Похудение и DrainEffect", callback_data="nl_slim")],
+            [InlineKeyboardButton(text="🧴 Красота и уход", callback_data="nl_beauty")],
+            [InlineKeyboardButton(text="📦 Прочее (Животные, Дети)", callback_data="nl_other")],
+            [InlineKeyboardButton(text="💎 Стать покупателем (Регистрация)", url="https://nlstar.com/ref/QTjP5R/")]
+        ]
+    )
+    return keyboard
+
+def get_beauty_subcategories_keyboard():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🌸 Уход за лицом", url="https://ng.nlstar.com/ru/api/referrals/ref/Z4VfCv/")],
+            [InlineKeyboardButton(text="🌿 Уход за телом", url="https://ng.nlstar.com/ru/api/referrals/ref/VeHQpy/")],
+            [InlineKeyboardButton(text="👔 Мужская косметика", url="https://ng.nlstar.com/ru/api/referrals/ref/CMEcFs/")],
+            [InlineKeyboardButton(text="🦷 Уход за полостью рта", url="https://ng.nlstar.com/ru/api/referrals/ref/XkH1T3/")],
+            [InlineKeyboardButton(text="🔙 Назад к каталогу NL", callback_data="back_to_nl")]
+        ]
+    )
+    return keyboard
+
+def get_other_subcategories_keyboard():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🐾 Для животных", callback_data="nl_pets")],
+            [InlineKeyboardButton(text="🧸 Для детей", callback_data="nl_kids")],
+            [InlineKeyboardButton(text="🔙 Назад к каталогу NL", callback_data="back_to_nl")]
+        ]
+    )
+    return keyboard
+
+def get_pets_subcategories_keyboard():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="💊 Витамины для животных", url="https://ng.nlstar.com/ru/api/referrals/ref/W4EEUd/")],
+            [InlineKeyboardButton(text="🧴 Косметика для животных", url="https://ng.nlstar.com/ru/api/referrals/ref/yT4zdU/")],
+            [InlineKeyboardButton(text="🔙 Назад в «Прочее»", callback_data="nl_other")]
+        ]
+    )
+    return keyboard
+
+def get_kids_subcategories_keyboard():
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="💊 Детские БАД", url="https://ng.nlstar.com/ru/api/referrals/ref/RQAZJL/")],
+            [InlineKeyboardButton(text="🧴 Детская косметика", url="https://ng.nlstar.com/ru/api/referrals/ref/a5p5SL/")],
+            [InlineKeyboardButton(text="🔙 Назад в «Прочее»", callback_data="nl_other")]
+        ]
+    )
+    return keyboard
+
+
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
-        "Здравствуйте! Я — Мия, виртуальный помощник студии эстетики и аппаратной косметологии Анны.\n"
-        "Я помогу вам подобрать процедуру для идеального преображения и отвечу на все вопросы.\n\n"
-        "Выберите направление:",
+        "Здравствуйте! Я — Мия, виртуальный помощник студии эстетики и аппаратной косметологии Анны (м. Тульская).\n"
+        "Я помогу вам подобрать процедуру для преображения или выбрать качественный уход и витамины изнутри.\n\n"
+        "Выберите нужное направление:",
         reply_markup=get_categories_keyboard(),
     )
     await state.set_state(MiaStates.choosing_category)
@@ -125,6 +184,99 @@ async def category_body(message: Message, state: FSMContext):
 async def category_face(message: Message, state: FSMContext):
     await message.answer("Выберите направление по лицу:", reply_markup=get_face_procedures_keyboard())
     await state.set_state(MiaStates.choosing_procedure)
+
+@router.message(MiaStates.choosing_category, F.text == "🌿 Уход и витамины / NL")
+async def category_nl(message: Message, state: FSMContext):
+    await message.answer(
+        "🌿 **Забота о красоте и здоровье изнутри**\n\n"
+        "Я сотрудничаю с NL International и рекомендую продукцию, которая идеально дополняет и усиливает результаты аппаратных процедур.\n\n"
+        "Выберите интересующий вас раздел:",
+        reply_markup=get_nl_categories_keyboard(),
+        parse_mode="Markdown"
+    )
+
+# --- ОБРАБОТЧИКИ ИНЛАЙН-КНОПОК NL ---
+@router.callback_query(F.data == "nl_collagen")
+async def cb_collagen(callback: Message):
+    text = (
+        "✨ **Коллаген для упругости кожи и суставов**\n"
+        "Идеально поддерживает каркас кожи после процедур Липосоникс и Indiba.\n\n"
+        "• **Collagentrinity (Вишня):** 3 вида коллагена (говяжий, морской, куриный) с пептидами (9 140 мг пептидов, эластин, гиалуроновая кислота в порции).\n"
+        "• **Collagen Peptides (Тропик):** 10 000 мг пептидов коллагена + витамин С, глицин, пролин."
+    )
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🌐 Каталог направления Коллаген", url="https://ng.nlstar.com/ru/api/referrals/ref/xn79LR/")],
+            [InlineKeyboardButton(text="🍒 Купить Collagentrinity (1)", url="https://ng.nlstar.com/ru/api/referrals/ref/hTFR5E/")],
+            [InlineKeyboardButton(text="🍒 Купить Collagentrinity (2)", url="https://ng.nlstar.com/ru/api/referrals/ref/LRiM39/")],
+            [InlineKeyboardButton(text="🍍 Купить Collagen Peptides", url="https://ng.nlstar.com/ru/api/referrals/ref/JgHoG2/")],
+            [InlineKeyboardButton(text="🔙 Назад к категориям NL", callback_data="back_to_nl")]
+        ]
+    )
+    await callback.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
+
+@router.callback_query(F.data == "nl_antiage")
+async def cb_antiage(callback: Message):
+    text = (
+        "🧬 **Антиэйдж (Программы молодости и антиоксиданты)**\n\n"
+        "• **«Анти-эйдж Молекула» (Anti-age Molecule):** Активация выработки NAD+ для клеточной энергии, низкомолекулярная гиалуроновая кислота для упругости кожи.\n"
+        "• **Пептидный напиток Cellcode®:** 7 пептидных компонентов и растительных экстрактов для запуска клеточного обновления и защиты суставов, сердца и тонуса."
+    )
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🌐 Каталог направления Anti-Age", url="https://ng.nlstar.com/ru/api/referrals/ref/LJ37dE/")],
+            [InlineKeyboardButton(text="🔙 Назад к категориям NL", callback_data="back_to_nl")]
+        ]
+    )
+    await callback.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
+
+@router.callback_query(F.data == "nl_slim")
+async def cb_slim(callback: Message):
+    text = (
+        "🔥 **Похудение и поддержка после процедур**\n"
+        "Отличная поддержка результатов криолиполиза и кавитации:\n\n"
+        "• **DrainEffect (Мята / Гранат):** Устранение отеков, запуск похудения, выведение токсинов.\n"
+        "• **Metaboost®:** Жиросжигатель с L-карнитином, хромом и инулином.\n"
+        "• **ED Smart (Супы и коктейли):** Сбалансированное питание и умная замена приема пищи (Фисташковое мороженое, Кофе, Ванильный пломбир, Сырный/Куриный суп и др.)."
+    )
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="🌐 Общий каталог похудения", url="https://ng.nlstar.com/ru/api/referrals/ref/vUkRdD/")],
+            [InlineKeyboardButton(text="🧴 Косметика для похудения", url="https://ng.nlstar.com/ru/api/referrals/ref/bnY282/")],
+            [InlineKeyboardButton(text="🥗 Функциональное питание ED Smart", url="https://ng.nlstar.com/ru/api/referrals/ref/SrFCko/")],
+            [InlineKeyboardButton(text="🔙 Назад к категориям NL", callback_data="back_to_nl")]
+        ]
+    )
+    await callback.message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
+
+@router.callback_query(F.data == "nl_beauty")
+async def cb_beauty(callback: Message):
+    text = "🧴 **Красота и уход**\nВыберите интересующий вас подраздел ухода:"
+    await callback.message.edit_text(text, reply_markup=get_beauty_subcategories_keyboard(), parse_mode="Markdown")
+
+@router.callback_query(F.data == "nl_other")
+async def cb_other(callback: Message):
+    text = "📦 **Прочее**\nВыберите нужную категорию:"
+    await callback.message.edit_text(text, reply_markup=get_other_subcategories_keyboard(), parse_mode="Markdown")
+
+@router.callback_query(F.data == "nl_pets")
+async def cb_pets(callback: Message):
+    text = "🐾 **Забота о домашних животных**\nВыберите категорию:"
+    await callback.message.edit_text(text, reply_markup=get_pets_subcategories_keyboard(), parse_mode="Markdown")
+
+@router.callback_query(F.data == "nl_kids")
+async def cb_kids(callback: Message):
+    text = "🧸 **Продукция для детей**\nВыберите категорию:"
+    await callback.message.edit_text(text, reply_markup=get_kids_subcategories_keyboard(), parse_mode="Markdown")
+
+@router.callback_query(F.data == "back_to_nl")
+async def cb_back_nl(callback: Message):
+    text = (
+        "🌿 **Забота о красоте и здоровье изнутри**\n\n"
+        "Выберите интересующий вас раздел:"
+    )
+    await callback.message.edit_text(text, reply_markup=get_nl_categories_keyboard(), parse_mode="Markdown")
+
 
 @router.message(MiaStates.choosing_procedure, F.text == "◀️ Назад к категориям")
 async def back_to_categories(message: Message, state: FSMContext):
@@ -150,32 +302,23 @@ async def choose_cryo(message: Message, state: FSMContext):
 @router.message(MiaStates.choosing_procedure, F.text == "📖 Подробнее о процедуре")
 async def cryo_details(message: Message, state: FSMContext):
     data = await state.get_data()
-    proc = data.get("current_procedure")
-    if proc == "Криолиполиз":
+    if data.get("current_procedure") == "Криолиполиз":
         text = (
             "🧊 **Всё о процедуре: Криолиполиз**\n\n"
             "✨ **Как проходит сеанс:**\n"
-            "1. На кожу накладывается специальная защитная салфетка (гель защищает от холода) и слой пленки.\n"
+            "1. На кожу накладывается специальная защитная салфетка и слой пленки.\n"
             "2. Мастер прикладывает насадку: она втягивает складку вакуумом и бережно охлаждает её.\n"
-            "3. Первые 3–5 минут вы можете чувствовать сильный холод и покалывание, затем зона «немеет».\n"
-            "4. Сеанс длится 45–60 минут, после чего мастер делает легкий массаж зоны.\n\n"
-            "📋 **Рекомендации ДО:**\n"
-            "• Не переедайте за 1–2 часа до сеанса.\n"
-            "• Исключите алкоголь за сутки.\n"
-            "• Пейте больше чистой воды (~30 мл на 1 кг веса).\n\n"
-            "📋 **Рекомендации ПОСЛЕ и курс:**\n"
-            "• Продолжайте пить воду для вывода разрушенных клеток.\n"
-            "• В день процедуры избегайте бань, саун и тяжелых тренировок.\n"
-            "• Не трите обработанную зону жесткой мочалкой.\n"
-            "• Эффект нарастает 3–8 недель. Повтор через 3-5 недель."
+            "3. Сеанс длится 45–60 минут, после чего мастер делает легкий массаж зоны.\n\n"
+            "📋 **Рекомендации ДО и ПОСЛЕ:**\n"
+            "• Пейте больше чистой воды (~30 мл на 1 кг веса).\n"
+            "• Избегайте бань, саун и тяжелых тренировок в день процедуры.\n"
+            "• Эффект нарастает 3–8 недель. Повтор через 3–5 недель."
         )
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📝 Записаться / Подобрать параметры")
 async def cryo_start_form(message: Message, state: FSMContext):
-    data = await state.get_data()
-    proc = data.get("current_procedure")
-    if proc == "Криолиполиз":
+    if (await state.get_data()).get("current_procedure") == "Криолиполиз":
         await message.answer(
             "🧊 Давайте проверим, подходит ли вам криолиполиз.\n"
             "Выберите зону / количество манипул:",
@@ -205,23 +348,13 @@ async def choose_liposonix(message: Message, state: FSMContext):
 
 @router.message(MiaStates.choosing_procedure, F.text == "📖 Подробнее о процедуре")
 async def liposonix_details(message: Message, state: FSMContext):
-    data = await state.get_data()
-    if data.get("current_procedure") == "Липосоникс":
+    if (await state.get_data()).get("current_procedure") == "Липосоникс":
         text = (
             "⚡ **Всё о процедуре: Липосоникс / ULFIT**\n\n"
             "💡 **Стоимость и расчет:**\n"
-            "• Зона 5×5 см (один квадрат) — 1 200 ₽ (включает 3 прохода для максимума эффекта).\n"
-            "• Точный расчет и разметка выполняются на очной консультации.\n"
+            "• Зона 5×5 см — 1 200 ₽ (3 прохода).\n"
             "⚠️ *Процедура проводится при размере одежды от 44-го.*\n\n"
-            "✨ **Как проходит сеанс:**\n"
-            "1. Мастер делает разметку маркером и считает квадраты.\n"
-            "2. Наносится гель-проводник, ультразвук точечно работает с глубоким жиром.\n"
-            "3. Ощущения: тепло, покалывание или вибрация (45–60 минут).\n\n"
-            "📋 **Подготовка и после:**\n"
-            "• Легкий перекус за 1-2 часа, без алкоголя за сутки.\n"
-            "• Пейте воду (30 мл/кг), в день сеанса без бань и саун.\n"
-            "• "repeat_interval": "6–8 недель",  # обновлено по вашему запросу
-        "effect_buildup": "до 2–3 месяцев"
+            "✨ **Как проходит сеанс:** Ультразвук точечно работает с глубоким жиром (45–60 минут)."
         )
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
@@ -240,7 +373,7 @@ async def liposonix_start_form(message: Message, state: FSMContext):
 async def liposonix_zone_selected(message: Message, state: FSMContext):
     await state.update_data(procedure=f"Липосоникс: {message.text}")
     await message.answer(
-        "Укажите ваш **размер одежды** (напоминаем, процедура проводится строго при размере от 44-го):",
+        "Укажите ваш **размер одежды** (процедура проводится строго при размере от 44-го):",
         reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(MiaStates.waiting_for_clothing_size)
@@ -265,18 +398,7 @@ async def choose_laser(message: Message, state: FSMContext):
 @router.message(MiaStates.choosing_procedure, F.text == "📖 Подробнее о процедуре")
 async def laser_details(message: Message, state: FSMContext):
     if (await state.get_data()).get("current_procedure") == "Лазерный липолиз":
-        text = (
-            "🏮 **Всё о процедуре: Лазерный липолиз**\n\n"
-            "✨ **Как проходит сеанс:**\n"
-            "1. Кожа должна быть чистой (без кремов).\n"
-            "2. Панели липолазера (10 штук) фиксируются ремнями по зоне.\n"
-            "3. Диодный лазер расщепляет жир, вы чувствуете приятное тепло (40 минут).\n"
-            "🔥 *Идеальная схема для максимума эффекта:* Липолазер $\\rightarrow$ Лимфодренаж / G5 $\\rightarrow$ RF-лифтинг.\n\n"
-            "📋 **Рекомендации:**\n"
-            "• Пейте больше чистой воды (1.5–2 л).\n"
-            "• В день процедуры избегайте саун и тяжелых тренировок.\n"
-            "• Рекомендуется курсом 2–3 раза в неделю."
-        )
+        text = "🏮 **Лазерный липолиз** (40 минут). Эффективно сочетается с лимфодренажем и RF-лифтингом."
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📝 Записаться / Подобрать параметры")
@@ -308,7 +430,7 @@ async def cavitation_selected(message: Message, state: FSMContext):
 async def choose_indiba(message: Message, state: FSMContext):
     await state.update_data(current_procedure="Индиба")
     await message.answer(
-        "📻 **INDIBA RF по телу** — передовая технология для подтяжки кожи, уменьшения целлюлита и объемов.\n"
+        "📻 **INDIBA RF по телу** — передовая технология для подтяжки кожи и объемов.\n"
         "Что вы хотите сделать?",
         reply_markup=get_procedure_action_keyboard(),
         parse_mode="Markdown"
@@ -317,17 +439,7 @@ async def choose_indiba(message: Message, state: FSMContext):
 @router.message(MiaStates.choosing_procedure, F.text == "📖 Подробнее о процедуре")
 async def indiba_details(message: Message, state: FSMContext):
     if (await state.get_data()).get("current_procedure") == "Индиба":
-        text = (
-            "📻 **Всё о процедуре: INDIBA RF (Тело)**\n\n"
-            "✨ **Как проходит сеанс:**\n"
-            "1. На чистую кожу наносится токопроводящий крем.\n"
-            "2. Мастер плавно прорабатывает зону манипулой.\n"
-            "3. Вы чувствуете глубокое, комфортное и расслабляющее тепло (45 минут).\n\n"
-            "📋 **Рекомендации:**\n"
-            "• Снимите металлические украшения.\n"
-            "• Пейте воду для поддержания гидратации.\n"
-            "• Курс: 2 раза в неделю."
-        )
+        text = "📻 Комфортная процедура с эффектом глубокого прогрева тканей (45 минут)."
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📝 Записаться / Подобрать параметры")
@@ -347,7 +459,7 @@ async def choose_rf_body(message: Message, state: FSMContext):
 # --- АНКЕТА И СБОР ДАННЫХ ---
 async def ask_height_weight_flow(message: Message, state: FSMContext):
     await message.answer(
-        "Укажите вашу **желаемую зону коррекции** своими словами (например: живот, бока, галифе, бедра):",
+        "Укажите вашу **желаемую зону коррекции** своими словами:",
         reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(MiaStates.waiting_for_zone)
@@ -387,10 +499,7 @@ async def weight_received(message: Message, state: FSMContext):
     bmi = round(weight / (height_m**2), 1)
 
     await state.update_data(weight=weight, bmi=bmi)
-    await message.answer(
-        f"Спасибо! Я рассчитала ваш индекс массы тела (ИМТ: {bmi}).\n"
-        "Сколько вам полных лет?"
-    )
+    await message.answer(f"Спасибо! Ваш ИМТ: {bmi}.\nСколько вам полных лет?")
     await state.set_state(MiaStates.waiting_for_age)
 
 @router.message(MiaStates.waiting_for_age)
@@ -398,7 +507,7 @@ async def age_received(message: Message, state: FSMContext):
     await state.update_data(age=message.text)
     await message.answer(
         "Есть ли у вас основные противопоказания?\n"
-        "(беременность/ГВ, онкология, кардиостимулятор, металлические импланты или грыжи в зоне обработки, эпилепсия)\n\n"
+        "(беременность/ГВ, онкология, кардиостимулятор, импланты, грыжи, эпилепсия)\n\n"
         "Напишите коротко: **нет** или укажите, если что-то имеется."
     )
     await state.set_state(MiaStates.waiting_for_contra)
@@ -414,12 +523,8 @@ async def contra_received(message: Message, state: FSMContext):
     data = await state.get_data()
     proc = data.get("procedure", "")
 
-    # Если выбрана Индиба, спрашиваем про микротоки
     if "Индиба" in proc:
-        await message.answer(
-            "⚠️ **Важный вопрос для Индибы:**\n"
-            "Используете ли вы параллельно любую микротоковую терапию?"
-        )
+        await message.answer("⚠️ Используете ли вы параллельно микротоковую терапию?")
         await state.set_state(MiaStates.waiting_for_microcurrents)
     else:
         await state.update_data(microcurrents="Не применимо")
@@ -432,7 +537,7 @@ async def microcurrents_received(message: Message, state: FSMContext):
 
 async def request_contact_step(message: Message, state: FSMContext):
     await message.answer(
-        "Мы почти закончили! Чтобы забронировать время, представьтесь, пожалуйста. **Как вас зовут?**",
+        "Чтобы забронировать время, представьтесь, пожалуйста. **Как вас зовут?**",
         reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(MiaStates.waiting_for_name)
@@ -445,10 +550,7 @@ async def name_received(message: Message, state: FSMContext):
         keyboard=[[KeyboardButton(text="📱 Поделиться контактом", request_contact=True)]],
         resize_keyboard=True
     )
-    await message.answer(
-        "Поделитесь вашим **номером телефона** (нажмите кнопку ниже или введите цифры):",
-        reply_markup=phone_keyboard
-    )
+    await message.answer("Поделитесь вашим **номером телефона**:", reply_markup=phone_keyboard)
     await state.set_state(MiaStates.waiting_for_phone)
 
 @router.message(MiaStates.waiting_for_phone, F.contact | F.text)
@@ -468,7 +570,6 @@ async def messenger_received(message: Message, state: FSMContext):
     data = await state.get_data()
     proc = data.get("procedure", "")
 
-    # Карточка для Анны
     lead_card = (
         "🔔 **НОВЫЙ ЗАПРОС ИЗ БОТА (@MIAestetik_Studio_bot)**\n\n"
         f"👤 **Имя:** {data.get('name')}\n"
@@ -479,7 +580,7 @@ async def messenger_received(message: Message, state: FSMContext):
         f"📊 **Рост/Вес/Возраст:** {data.get('height')} см / {data.get('weight')} кг / {data.get('age')} лет\n"
         f"📐 **ИМТ:** {data.get('bmi')}\n"
         f"🛡 **Противопоказания:** {data.get('contra')}\n"
-        f"⚡ **Доп. (размер/микротоки):** Размер: {data.get('clothing_size', 'н/д')} | Микротоки: {data.get('microcurrents')}"
+        f"⚡ **Доп.:** Размер: {data.get('clothing_size', 'н/д')} | Микротоки: {data.get('microcurrents')}"
     )
 
     try:
@@ -524,8 +625,7 @@ async def messenger_received(message: Message, state: FSMContext):
         )
     else:
         await message.answer(
-            "Готово! Я передала всю информацию Анне. Так как ваш запрос требует индивидуального расчета или уточнения деталей, "
-            "Анна свяжется с вами лично в ближайшее время в указанном мессенджере."
+            "Готово! Я передала всю информацию Анне. Анна свяжется с вами лично в ближайшее время."
         )
 
     await state.clear()
@@ -541,8 +641,7 @@ async def empty_face_procedures(message: Message, state: FSMContext):
     )
     await message.answer(
         "Извините, этот раздел услуг сейчас находится в разработке и наполняется 🌸\n\n"
-        "Вы всегда можете ознакомиться со всеми актуальными услугами, стоимостью и записаться "
-        "в нашем профиле DIKIDI:",
+        "Вы всегда можете ознакомиться со всеми актуальными услугами и записаться в нашем профиле DIKIDI:",
         reply_markup=dikidi_profile_kb
     )
 
@@ -553,7 +652,7 @@ async def main():
     dp = Dispatcher()
     dp.include_router(router)
     
-    print("Бот @MIAestetik_Studio_bot полностью обновлен с экспертными сценариями и запущен!")
+    print("Бот @MIAestetik_Studio_bot обновлен и запущен со всеми разделами NL и витаминов!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
