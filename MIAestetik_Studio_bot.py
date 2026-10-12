@@ -39,6 +39,7 @@ class MiaStates(StatesGroup):
 def get_categories_keyboard():
     buttons = [
         [KeyboardButton(text="🔥 Коррекция тела (Топ-запросы)")],
+        [KeyboardButton(text="🎯 С чего начать (Старт коррекции)")],
         [KeyboardButton(text="✨ Уход и омоложение лица")],
         [KeyboardButton(text="🌿 Уход и витамины / NL")],
     ]
@@ -53,6 +54,29 @@ def get_body_procedures_keyboard():
         [KeyboardButton(text="🌊 Кавитация")],
         [KeyboardButton(text="📻 Индиба-массаж (Талия и живот)")],
         [KeyboardButton(text="✨ RF-лифтинг тела (30 мин)")],
+        [KeyboardButton(text="◀️ Назад к категориям")],
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+# Меню «С чего начать»
+def get_start_programs_keyboard():
+    buttons = [
+        [KeyboardButton(text="📋 Консультация + подбор программы")],
+        [KeyboardButton(text="✨ Комплекс «Старт коррекции»")],
+        [KeyboardButton(text="◀️ Назад к категориям")],
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+# Меню процедур для лица
+def get_face_procedures_keyboard():
+    buttons = [
+        [KeyboardButton(text="🧪 Карбокситерапия CO2")],
+        [KeyboardButton(text="💎 V-LIFT с PDRN и пептидами")],
+        [KeyboardButton(text="✨ Ультразвуковая чистка лица")],
+        [KeyboardButton(text="📻 Аппаратный уход RF (Лицо)")],
+        [KeyboardButton(text="💧 «Фарфоровая куколка» (Фонофорез)")],
+        [KeyboardButton(text="☕ Кофейный антивозрастной пилинг")],
+        [KeyboardButton(text="🌿 Tiffany / Бирюзовый PDRN-пилинг")],
         [KeyboardButton(text="◀️ Назад к категориям")],
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
@@ -94,15 +118,6 @@ def get_cavitation_keyboard():
         [KeyboardButton(text="Кавитация 30 минут")],
         [KeyboardButton(text="Кавитация 60 минут (несколько зон)")],
         [KeyboardButton(text="◀️ К списку процедур")],
-    ]
-    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
-
-# Меню для лица (с разделами и заглушками)
-def get_face_procedures_keyboard():
-    buttons = [
-        [KeyboardButton(text="🌟 INDIBA RF (Лицо)")],
-        [KeyboardButton(text="🧪 Пилинги и уход")],
-        [KeyboardButton(text="◀️ Назад к категориям")],
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
@@ -180,9 +195,14 @@ async def category_body(message: Message, state: FSMContext):
     await message.answer("Выберите процедуру по телу:", reply_markup=get_body_procedures_keyboard())
     await state.set_state(MiaStates.choosing_procedure)
 
+@router.message(MiaStates.choosing_category, F.text == "🎯 С чего начать (Старт коррекции)")
+async def category_start(message: Message, state: FSMContext):
+    await message.answer("Выберите стартовую программу:", reply_markup=get_start_programs_keyboard())
+    await state.set_state(MiaStates.choosing_procedure)
+
 @router.message(MiaStates.choosing_category, F.text == "✨ Уход и омоложение лица")
 async def category_face(message: Message, state: FSMContext):
-    await message.answer("Выберите направление по лицу:", reply_markup=get_face_procedures_keyboard())
+    await message.answer("Выберите процедуру по уходу за лицом:", reply_markup=get_face_procedures_keyboard())
     await state.set_state(MiaStates.choosing_procedure)
 
 @router.message(MiaStates.choosing_category, F.text == "🌿 Уход и витамины / NL")
@@ -201,7 +221,7 @@ async def cb_collagen(callback: Message):
     text = (
         "✨ **Коллаген для упругости кожи и суставов**\n"
         "Идеально поддерживает каркас кожи после процедур Липосоникс и Indiba.\n\n"
-        "• **Collagentrinity (Вишня):** 3 вида коллагена (говяжий, морской, куриный) с пептидами (9 140 мг пептидов, эластин, гиалуроновая кислота в порции).\n"
+        "• **Collagentrinity (Вишня):** 3 вида коллагена с пептидами (9 140 мг пептидов, эластин, гиалуроновая кислота).\n"
         "• **Collagen Peptides (Тропик):** 10 000 мг пептидов коллагена + витамин С, глицин, пролин."
     )
     kb = InlineKeyboardMarkup(
@@ -219,8 +239,8 @@ async def cb_collagen(callback: Message):
 async def cb_antiage(callback: Message):
     text = (
         "🧬 **Антиэйдж (Программы молодости и антиоксиданты)**\n\n"
-        "• **«Анти-эйдж Молекула» (Anti-age Molecule):** Активация выработки NAD+ для клеточной энергии, низкомолекулярная гиалуроновая кислота для упругости кожи.\n"
-        "• **Пептидный напиток Cellcode®:** 7 пептидных компонентов и растительных экстрактов для запуска клеточного обновления и защиты суставов, сердца и тонуса."
+        "• **«Анти-эйдж Молекула» (Anti-age Molecule):** Активация выработки NAD+ для клеточной энергии, гиалуроновая кислота.\n"
+        "• **Пептидный напиток Cellcode®:** 7 пептидных компонентов для клеточного обновления и защиты."
     )
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -234,10 +254,10 @@ async def cb_antiage(callback: Message):
 async def cb_slim(callback: Message):
     text = (
         "🔥 **Похудение и поддержка после процедур**\n"
-        "Отличная поддержка результатов криолиполиза и кавитации:\n\n"
-        "• **DrainEffect (Мята / Гранат):** Устранение отеков, запуск похудения, выведение токсинов.\n"
+        "Поддержка результатов криолиполиза и кавитации:\n\n"
+        "• **DrainEffect (Мята / Гранат):** Устранение отеков, запуск похудения.\n"
         "• **Metaboost®:** Жиросжигатель с L-карнитином, хромом и инулином.\n"
-        "• **ED Smart (Супы и коктейли):** Сбалансированное питание и умная замена приема пищи (Фисташковое мороженое, Кофе, Ванильный пломбир, Сырный/Куриный суп и др.)."
+        "• **ED Smart (Супы и коктейли):** Умная замена приема пищи."
     )
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -271,10 +291,7 @@ async def cb_kids(callback: Message):
 
 @router.callback_query(F.data == "back_to_nl")
 async def cb_back_nl(callback: Message):
-    text = (
-        "🌿 **Забота о красоте и здоровье изнутри**\n\n"
-        "Выберите интересующий вас раздел:"
-    )
+    text = "🌿 **Забота о красоте и здоровье изнутри**\n\nВыберите интересующий вас раздел:"
     await callback.message.edit_text(text, reply_markup=get_nl_categories_keyboard(), parse_mode="Markdown")
 
 
@@ -287,6 +304,7 @@ async def back_to_categories(message: Message, state: FSMContext):
 async def back_to_body_list(message: Message, state: FSMContext):
     await message.answer("Выберите процедуру по телу:", reply_markup=get_body_procedures_keyboard())
     await state.set_state(MiaStates.choosing_procedure)
+
 
 # --- 1. КРИОЛИПОЛИЗ ---
 @router.message(MiaStates.choosing_procedure, F.text == "🧊 Криолиполиз")
@@ -305,25 +323,15 @@ async def cryo_details(message: Message, state: FSMContext):
     if data.get("current_procedure") == "Криолиполиз":
         text = (
             "🧊 **Всё о процедуре: Криолиполиз**\n\n"
-            "✨ **Как проходит сеанс:**\n"
-            "1. На кожу накладывается специальная защитная салфетка и слой пленки.\n"
-            "2. Мастер прикладывает насадку: она втягивает складку вакуумом и бережно охлаждает её.\n"
-            "3. Сеанс длится 45–60 минут, после чего мастер делает легкий массаж зоны.\n\n"
-            "📋 **Рекомендации ДО и ПОСЛЕ:**\n"
-            "• Пейте больше чистой воды (~30 мл на 1 кг веса).\n"
-            "• Избегайте бань, саун и тяжелых тренировок в день процедуры.\n"
-            "• Эффект нарастает 3–8 недель. Повтор через 3–5 недель."
+            "✨ **Как проходит сеанс:** 45–60 минут бережного охлаждения жировой складки под защитной салфеткой.\n\n"
+            "📋 **Рекомендации:** Пейте больше чистой воды (~30 мл/кг), избегайте бань и саун в день процедуры."
         )
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📝 Записаться / Подобрать параметры")
 async def cryo_start_form(message: Message, state: FSMContext):
     if (await state.get_data()).get("current_procedure") == "Криолиполиз":
-        await message.answer(
-            "🧊 Давайте проверим, подходит ли вам криолиполиз.\n"
-            "Выберите зону / количество манипул:",
-            reply_markup=get_cryo_zones_keyboard()
-        )
+        await message.answer("🧊 Выберите зону / количество манипул:", reply_markup=get_cryo_zones_keyboard())
 
 @router.message(F.text.in_({
     "Руки, бедра, бока (2 манипулы)", 
@@ -349,22 +357,13 @@ async def choose_liposonix(message: Message, state: FSMContext):
 @router.message(MiaStates.choosing_procedure, F.text == "📖 Подробнее о процедуре")
 async def liposonix_details(message: Message, state: FSMContext):
     if (await state.get_data()).get("current_procedure") == "Липосоникс":
-        text = (
-            "⚡ **Всё о процедуре: Липосоникс / ULFIT**\n\n"
-            "💡 **Стоимость и расчет:**\n"
-            "• Зона 5×5 см — 1 200 ₽ (3 прохода).\n"
-            "⚠️ *Процедура проводится при размере одежды от 44-го.*\n\n"
-            "✨ **Как проходит сеанс:** Ультразвук точечно работает с глубоким жиром (45–60 минут)."
-        )
+        text = "⚡ Зона 5×5 см — 1 200 ₽. Процедура проводится строго при размере одежды от 44-го."
         await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📝 Записаться / Подобрать параметры")
 async def liposonix_start_form(message: Message, state: FSMContext):
     if (await state.get_data()).get("current_procedure") == "Липосоникс":
-        await message.answer(
-            "⚡ Выберите зону Липосоникс:",
-            reply_markup=get_liposonix_zones_keyboard()
-        )
+        await message.answer("⚡ Выберите зону Липосоникс:", reply_markup=get_liposonix_zones_keyboard())
 
 @router.message(F.text.in_({
     "Липосоникс — Живот", "Липосоникс — Бока", "Липосоникс — Бёдра", 
@@ -372,10 +371,7 @@ async def liposonix_start_form(message: Message, state: FSMContext):
 }))
 async def liposonix_zone_selected(message: Message, state: FSMContext):
     await state.update_data(procedure=f"Липосоникс: {message.text}")
-    await message.answer(
-        "Укажите ваш **размер одежды** (процедура проводится строго при размере от 44-го):",
-        reply_markup=ReplyKeyboardRemove()
-    )
+    await message.answer("Укажите ваш **размер одежды** (от 44-го):", reply_markup=ReplyKeyboardRemove())
     await state.set_state(MiaStates.waiting_for_clothing_size)
 
 @router.message(MiaStates.waiting_for_clothing_size)
@@ -388,18 +384,12 @@ async def clothing_size_received(message: Message, state: FSMContext):
 @router.message(MiaStates.choosing_procedure, F.text == "🏮 Лазерный липолиз")
 async def choose_laser(message: Message, state: FSMContext):
     await state.update_data(current_procedure="Лазерный липолиз")
-    await message.answer(
-        "🏮 **Лазерный липолиз** — холодный лазер 650 нм для безопасного расщепления жира и подтяжки кожи.\n"
-        "Что вы хотите сделать?",
-        reply_markup=get_procedure_action_keyboard(),
-        parse_mode="Markdown"
-    )
+    await message.answer("🏮 **Лазерный липолиз** 650 нм. Что вы хотите сделать?", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📖 Подробнее о процедуре")
 async def laser_details(message: Message, state: FSMContext):
     if (await state.get_data()).get("current_procedure") == "Лазерный липолиз":
-        text = "🏮 **Лазерный липолиз** (40 минут). Эффективно сочетается с лимфодренажем и RF-лифтингом."
-        await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
+        await message.answer("🏮 Сеанс 40 минут. Идеален в комплексе с лимфодренажем и RF.", parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📝 Записаться / Подобрать параметры")
 async def laser_start_form(message: Message, state: FSMContext):
@@ -412,12 +402,7 @@ async def laser_start_form(message: Message, state: FSMContext):
 @router.message(MiaStates.choosing_procedure, F.text == "🌊 Кавитация")
 async def choose_cavitation(message: Message, state: FSMContext):
     await state.update_data(current_procedure="Кавитация")
-    await message.answer(
-        "🌊 **Кавитация** — эффективное разрушение жировых клеток ультразвуком.\n"
-        "Выберите формат:",
-        reply_markup=get_cavitation_keyboard(),
-        parse_mode="Markdown"
-    )
+    await message.answer("🌊 Выберите формат кавитации:", reply_markup=get_cavitation_keyboard())
 
 @router.message(F.text.in_({"Кавитация 30 минут", "Кавитация 60 минут (несколько зон)"}))
 async def cavitation_selected(message: Message, state: FSMContext):
@@ -429,18 +414,12 @@ async def cavitation_selected(message: Message, state: FSMContext):
 @router.message(MiaStates.choosing_procedure, F.text == "📻 Индиба-массаж (Талия и живот)")
 async def choose_indiba(message: Message, state: FSMContext):
     await state.update_data(current_procedure="Индиба")
-    await message.answer(
-        "📻 **INDIBA RF по телу** — передовая технология для подтяжки кожи и объемов.\n"
-        "Что вы хотите сделать?",
-        reply_markup=get_procedure_action_keyboard(),
-        parse_mode="Markdown"
-    )
+    await message.answer("📻 **INDIBA RF** (448 кГц). Что вы хотите сделать?", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📖 Подробнее о процедуре")
 async def indiba_details(message: Message, state: FSMContext):
     if (await state.get_data()).get("current_procedure") == "Индиба":
-        text = "📻 Комфортная процедура с эффектом глубокого прогрева тканей (45 минут)."
-        await message.answer(text, parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
+        await message.answer("📻 Глубокий комфортный прогрев тканей, подтяжка и моделирование (45 мин).", parse_mode="Markdown", reply_markup=get_procedure_action_keyboard())
 
 @router.message(MiaStates.choosing_procedure, F.text == "📝 Записаться / Подобрать параметры")
 async def indiba_start_form(message: Message, state: FSMContext):
@@ -456,12 +435,52 @@ async def choose_rf_body(message: Message, state: FSMContext):
     await ask_height_weight_flow(message, state)
 
 
-# --- АНКЕТА И СБОР ДАННЫХ ---
-async def ask_height_weight_flow(message: Message, state: FSMContext):
-    await message.answer(
-        "Укажите вашу **желаемую зону коррекции** своими словами:",
-        reply_markup=ReplyKeyboardRemove()
+# --- СТАРТОВЫЕ ПРОГРАММЫ И ЛИЦО (Прямые ссылки на DIKIDI) ---
+@router.message(MiaStates.choosing_procedure, F.text.in_({
+    "📋 Консультация + подбор программы", "✨ Комплекс «Старт коррекции»",
+    "🧪 Карбокситерапия CO2", "💎 V-LIFT с PDRN и пептидами",
+    "✨ Ультразвуковая чистка лица", "📻 Аппаратный уход RF (Лицо)",
+    "💧 «Фарфоровая куколка» (Фонофорез)", "☕ Кофейный антивозрастной пилинг",
+    "🌿 Tiffany / Бирюзовый PDRN-пилинг"
+}))
+async def direct_dikidi_procedure(message: Message, state: FSMContext):
+    proc = message.text
+    dikidi_url = None
+
+    if "Консультация + подбор программы" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/21753983"
+    elif "Комплекс «Старт коррекции»" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/22125430"
+    elif "Карбокситерапия CO2" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/21225840"
+    elif "V-LIFT с PDRN" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/22555535"
+    elif "Ультразвуковая чистка лица" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/21335030"
+    elif "Аппаратный уход RF (Лицо)" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/23432381"
+    elif "Фарфоровая куколка" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/22555865"
+    elif "Кофейный антивозрастной пилинг" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/22538168"
+    elif "Tiffany / Бирюзовый PDRN-пилинг" in proc:
+        dikidi_url = "https://dkd.su/1932426/s/22538181"
+
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="📅 Записаться онлайн в DIKIDI", url=dikidi_url)]]
     )
+    await message.answer(
+        f"🌸 Вы выбрали: **{proc}**\n\n"
+        "Вы можете сразу забронировать удобное время визита в нашей студии на м. Тульская по ссылке:",
+        reply_markup=kb,
+        parse_mode="Markdown"
+    )
+    await state.clear()
+
+
+# --- АНКЕТА И СБОР ДАННЫХ ДЛЯ ТЕЛА ---
+async def ask_height_weight_flow(message: Message, state: FSMContext):
+    await message.answer("Укажите вашу **желаемую зону коррекции** своими словами:", reply_markup=ReplyKeyboardRemove())
     await state.set_state(MiaStates.waiting_for_zone)
 
 @router.message(MiaStates.waiting_for_zone)
@@ -477,9 +496,8 @@ async def height_received(message: Message, state: FSMContext):
         if height < 50 or height > 250:
             raise ValueError
     except ValueError:
-        await message.answer("Пожалуйста, введите корректный рост цифрами (например, 168):")
+        await message.answer("Введите корректный рост цифрами (например, 168):")
         return
-
     await state.update_data(height=height)
     await message.answer("Укажите ваш **вес** (в килограммах, например: 65):")
     await state.set_state(MiaStates.waiting_for_weight)
@@ -491,13 +509,10 @@ async def weight_received(message: Message, state: FSMContext):
         if weight < 30 or weight > 300:
             raise ValueError
     except ValueError:
-        await message.answer("Пожалуйста, введите корректный вес цифрами (например, 65):")
+        await message.answer("Введите корректный вес цифрами (например, 65):")
         return
-
     data = await state.get_data()
-    height_m = data["height"] / 100.0
-    bmi = round(weight / (height_m**2), 1)
-
+    bmi = round(weight / ((data["height"] / 100.0) ** 2), 1)
     await state.update_data(weight=weight, bmi=bmi)
     await message.answer(f"Спасибо! Ваш ИМТ: {bmi}.\nСколько вам полных лет?")
     await state.set_state(MiaStates.waiting_for_age)
@@ -505,26 +520,18 @@ async def weight_received(message: Message, state: FSMContext):
 @router.message(MiaStates.waiting_for_age)
 async def age_received(message: Message, state: FSMContext):
     await state.update_data(age=message.text)
-    await message.answer(
-        "Есть ли у вас основные противопоказания?\n"
-        "(беременность/ГВ, онкология, кардиостимулятор, импланты, грыжи, эпилепсия)\n\n"
-        "Напишите коротко: **нет** или укажите, если что-то имеется."
-    )
+    await message.answer("Есть ли противопоказания? (беременность/ГВ, онкология, кардиостимулятор, импланты, грыжи, эпилепсия)\n\nНапишите: **нет** или укажите нюансы.")
     await state.set_state(MiaStates.waiting_for_contra)
 
 @router.message(MiaStates.waiting_for_contra)
 async def contra_received(message: Message, state: FSMContext):
     contra_text = message.text.lower()
-    has_contra = any(word in contra_text for word in ["да", "беремен", "онко", "кардио", "имплант", "грыж", "эпилепси"])
-    
+    has_contra = any(w in contra_text for w in ["да", "беремен", "онко", "кардио", "имплант", "грыж", "эпилепси"])
     status = "Не обнаружены" if not has_contra else f"Есть нюанс: {message.text}"
     await state.update_data(contra=status, has_contra=has_contra)
 
-    data = await state.get_data()
-    proc = data.get("procedure", "")
-
-    if "Индиба" in proc:
-        await message.answer("⚠️ Используете ли вы параллельно микротоковую терапию?")
+    if "Индиба" in (await state.get_data()).get("procedure", ""):
+        await message.answer("⚠️ Используете ли параллельно микротоковую терапию?")
         await state.set_state(MiaStates.waiting_for_microcurrents)
     else:
         await state.update_data(microcurrents="Не применимо")
@@ -536,32 +543,21 @@ async def microcurrents_received(message: Message, state: FSMContext):
     await request_contact_step(message, state)
 
 async def request_contact_step(message: Message, state: FSMContext):
-    await message.answer(
-        "Чтобы забронировать время, представьтесь, пожалуйста. **Как вас зовут?**",
-        reply_markup=ReplyKeyboardRemove()
-    )
+    await message.answer("Как вас зовут?", reply_markup=ReplyKeyboardRemove())
     await state.set_state(MiaStates.waiting_for_name)
 
 @router.message(MiaStates.waiting_for_name)
 async def name_received(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
-    
-    phone_keyboard = ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="📱 Поделиться контактом", request_contact=True)]],
-        resize_keyboard=True
-    )
-    await message.answer("Поделитесь вашим **номером телефона**:", reply_markup=phone_keyboard)
+    phone_kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="📱 Поделиться контактом", request_contact=True)]], resize_keyboard=True)
+    await message.answer("Поделитесь номером телефона:", reply_markup=phone_kb)
     await state.set_state(MiaStates.waiting_for_phone)
 
 @router.message(MiaStates.waiting_for_phone, F.contact | F.text)
 async def phone_received(message: Message, state: FSMContext):
     phone = message.contact.phone_number if message.contact else message.text
     await state.update_data(phone=phone)
-
-    await message.answer(
-        "В каком мессенджере вам удобнее продолжить общение? (Telegram, WhatsApp)",
-        reply_markup=ReplyKeyboardRemove()
-    )
+    await message.answer("В каком мессенджере удобнее продолжить общение? (Telegram, WhatsApp)", reply_markup=ReplyKeyboardRemove())
     await state.set_state(MiaStates.waiting_for_messenger)
 
 @router.message(MiaStates.waiting_for_messenger)
@@ -577,16 +573,14 @@ async def messenger_received(message: Message, state: FSMContext):
         f"💬 **Мессенджер:** {messenger}\n\n"
         f"⚙️ **Процедура:** {proc}\n"
         f"📍 **Зона:** {data.get('zone')}\n"
-        f"📊 **Рост/Вес/Возраст:** {data.get('height')} см / {data.get('weight')} кг / {data.get('age')} лет\n"
-        f"📐 **ИМТ:** {data.get('bmi')}\n"
-        f"🛡 **Противопоказания:** {data.get('contra')}\n"
-        f"⚡ **Доп.:** Размер: {data.get('clothing_size', 'н/д')} | Микротоки: {data.get('microcurrents')}"
+        f"📊 **Параметры:** {data.get('height')} см / {data.get('weight')} кг / {data.get('age')} лет (ИМТ: {data.get('bmi')})\n"
+        f"🛡 **Противопоказания:** {data.get('contra')}"
     )
 
     try:
         await message.bot.send_message(ADMIN_CHAT_ID, lead_card, parse_mode="Markdown")
     except Exception as e:
-        logging.error(f"Не удалось отправить лид администратору: {e}")
+        logging.error(f"Не удалось отправить лид: {e}")
 
     has_contra = data.get("has_contra")
     dikidi_url = None
@@ -615,35 +609,12 @@ async def messenger_received(message: Message, state: FSMContext):
         dikidi_url = "https://dkd.su/1932426/s/23483877"
 
     if not has_contra and dikidi_url:
-        dikidi_kb = InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text="📅 Записаться онлайн в DIKIDI", url=dikidi_url)]]
-        )
-        await message.answer(
-            "Готово! Я передала всю информацию Анне. Противопоказаний по анкете не обнаружено, "
-            "вы можете сразу выбрать удобное время визита по прямой ссылке:",
-            reply_markup=dikidi_kb
-        )
+        dikidi_kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="📅 Записаться онлайн в DIKIDI", url=dikidi_url)]])
+        await message.answer("Готово! Я передала информацию Анне. Противопоказаний не обнаружено, вы можете записаться онлайн:", reply_markup=dikidi_kb)
     else:
-        await message.answer(
-            "Готово! Я передала всю информацию Анне. Анна свяжется с вами лично в ближайшее время."
-        )
+        await message.answer("Готово! Я передала информацию Анне. Она свяжется с вами в ближайшее время.")
 
     await state.clear()
-
-
-# --- ЗАГЛУШКИ ДЛЯ ЛИЦА ---
-@router.message(MiaStates.choosing_procedure, F.text.in_({
-    "🌟 INDIBA RF (Лицо)", "🧪 Пилинги и уход"
-}))
-async def empty_face_procedures(message: Message, state: FSMContext):
-    dikidi_profile_kb = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="👉 Посмотреть все услуги в DIKIDI", url="https://dikidi.net/apparatestetik")]]
-    )
-    await message.answer(
-        "Извините, этот раздел услуг сейчас находится в разработке и наполняется 🌸\n\n"
-        "Вы всегда можете ознакомиться со всеми актуальными услугами и записаться в нашем профиле DIKIDI:",
-        reply_markup=dikidi_profile_kb
-    )
 
 
 async def main():
@@ -651,8 +622,7 @@ async def main():
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
     dp.include_router(router)
-    
-    print("Бот @MIAestetik_Studio_bot обновлен и запущен со всеми разделами NL и витаминов!")
+    print("Бот @MIAestetik_Studio_bot обновлен: лицо и старт коррекции добавлены!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
